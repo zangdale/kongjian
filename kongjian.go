@@ -4,25 +4,38 @@ import "sync"
 
 type KongJianInter[D any, R any] interface {
 	InitFeatures(features []*Feature[D, R]) error
-	SearchInter[D]
+	SearchAdd(data D) error
+	SearchExist(data D) (bool, error)
+	SearchDelete(data D) error
+}
+
+var _ SearchInter[[]byte, int64] = (*SearchDataInt64)(nil)
+
+type SearchDataInt64 struct {
+	*SearchData[[]byte, int64]
+}
+
+func (s *SearchDataInt64) VisNil(v int64) bool {
+	return v == 0
 }
 
 var _ KongJianInter[[]byte, int64] = (*KongJian)(nil)
-var _ SearchInter[[]byte] = (*KongJian)(nil)
 
 type KongJian struct {
 	sync.RWMutex
-	featureDatas []*SearchData[[]byte, int64]
+	featureDatas []*SearchDataInt64
 }
 
 func (k *KongJian) InitFeatures(features []*Feature[[]byte, int64]) error {
 	if features == nil {
 		return nil
 	}
-	k.featureDatas = func() (res []*SearchData[[]byte, int64]) {
+	k.featureDatas = func() (res []*SearchDataInt64) {
 		for i := range features {
-			res = append(res, &SearchData[[]byte, int64]{
-				Feature: features[i],
+			res = append(res, &SearchDataInt64{
+				SearchData: &SearchData[[]byte, int64]{
+					Feature: features[i],
+				},
 			})
 		}
 		return
